@@ -140,5 +140,3 @@ p + geom_line(aes(colour = city)) +
   scale_y_continuous(limits = c(0, 100),
                      breaks = seq(0, 100, 20)) +
   annotate("text", x = ymd(20150415), y = 90, label = "For more about growth index see\nwww.blog.asianturfgrass.com/2015/09/a-dli-index.html")
-
-  
