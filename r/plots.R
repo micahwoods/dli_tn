@@ -71,7 +71,10 @@ p + geom_point(alpha = 0.3) +
   geom_smooth(data = all, aes(x = date, y = dliCalc),
               enp.target = 15, se = FALSE, colour = "Red") +
   facet_wrap(~ location, ncol = 4) +
-  background_grid(major = "xy", minor = "xy")
+  background_grid(major = "xy", minor = "xy") +
+  scale_x_datetime(limits = c(ymd(20150101), ymd(20151220))) +
+  labs(x = "",
+       y = "DLI, points are measured, blue is moving avg, red is moving avg of estimate")
 
 # plot DLI actual through 2015 faceted by location and cut by being 20 C or over
 # and add in the DLI calc moving average and see how it compares
