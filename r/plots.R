@@ -70,9 +70,9 @@ p + geom_point(alpha = 0.3) +
   geom_smooth(enp.target = 15, se = FALSE) +
   geom_smooth(data = all, aes(x = date, y = dliCalc),
               enp.target = 15, se = FALSE, colour = "Red") +
-  facet_wrap(~ location, ncol = 4) +
+  facet_wrap(~ location, ncol = 2) +
   background_grid(major = "xy", minor = "xy") +
-  scale_x_datetime(limits = c(ymd(20150101), ymd(20151220))) +
+  scale_x_datetime(breaks = "4 months", minor_breaks = "1 month") +
   labs(x = "",
        y = "DLI, points are measured, blue is moving avg, red is moving avg of estimate")
 
@@ -85,4 +85,23 @@ p + geom_point(alpha = 0.3) +
               enp.target = 10, se = FALSE, colour = "Red") +
   facet_wrap(~ location, ncol = 4) +
   background_grid(major = "xy", minor = "xy")
+
+# plot corrected Rs vs measured Rs, eight locations
+p <- ggplot(data = all, aes(x = dliCalc, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm', se = FALSE) +
+  geom_abline(intercept = 0, slope = 1, colour = "dark green") +
+  background_grid(major = "xy") +
+  labs(x = "dliCalc",
+       y = "dli")
+
+# plot a histogram of all cities actual vs all cities modeled
+p <- ggplot(data = all, aes(x = dliCalc, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm', se = FALSE) +
+  geom_abline(intercept = 0, slope = 1, colour = "dark green") +
+  background_grid(major = "xy") +
+  labs(x = "dliCalc",
+       y = "dli")
+
 
