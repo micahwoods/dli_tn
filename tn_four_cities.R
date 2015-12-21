@@ -5,6 +5,9 @@
 # Knoxville, and Chattanooga
 # data are from http://www.ncdc.noaa.gov/cdo-web/
 
+source("r/libraries.R")
+source("r/functions.R")
+
 tn <- read.csv("data/tn_2015.csv",
                header = TRUE)
 
@@ -22,8 +25,14 @@ tn$Ra <- functionRa(tn$LATITUDE, tn$date)
 tn$minTemp <- tn$TMIN / 10
 tn$maxTemp <- tn$TMAX / 10
 
-# calculate Rs and then DLI
-tn$RsCalc <- hargreave(tn$Ra, tn$minTemp, tn$maxTemp)
+# calculate Rs 
+tn$RsCalc1 <- hargreave(tn$Ra, tn$minTemp, tn$maxTemp)
+
+# adjust Rs based on the 8 stations in region from NRCC data
+tn$RsCalc <- -2.71108 + tn$RsCalc1 * 1.09444
+
+
+# and then calculate DLI
 tn$dliCalc <- tn$RsCalc * 2.04
 
 tn$date1 <- as.Date(tn$date)
