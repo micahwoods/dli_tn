@@ -1,0 +1,202 @@
+---
+title: "Estimating daily light integral (DLI) in 4 Tennessee cities"
+author: "Micah Woods"
+date: "21 December 2015"
+output: html_document
+bibliography: "/home/myuser/Documents/reports/citation.bib"
+---
+
+This describes how I estimated the daily light integral (DLI) for 2015 in Chattanooga, Knoxville, Memphis, and Nashville. The code for this document, and for the calculations, is at <https://github.com/micahwoods/dli_tn>. 
+
+I had written about an average DLI of 40 being a *no problem* level for bermudagrass putting greens. [Brandon Horvath](https://twitter.com/UTTurfPath?lang=en) asked if I could generate some DLI values for Tennessee locations.
+
+That sound like it would be easy, but it takes a bit of calculation. It's not like there are sensors for photosynthetically active radiation (PAR) all around the state, streaming the measurements or making them available for download. If there are such data sources, please let me know!
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+source("r/libraries.R")
+source("r/functions.R")
+source("nrcc_nearby_stations.R")
+source("tn_four_cities.R")
+
+```
+
+Here's what I did.
+
+### Step 1, get measured data from nearby stations
+
+I knew that DLI data for the 4 cities of interest were not available, but I could get global solar irradiance (R~s~) measurements for Crossville, TN, and for a number of locations in the surrounding states. [`nrcc_nearby_stations.R`](https://github.com/micahwoods/dli_tn/blob/master/nrcc_nearby_stations.R) gets the 2015 daily summaries from the [U.S. Climate Reference Network](http://www.ncdc.noaa.gov/crn/qcdatasets.html) [@Diamond2013]. Then, I converted the measured R~s~ from units of MJ m^-2^ d^-1^ to DLI in units of moles m^-2^ d^-1^. I did this by multiplying R~s~ by 2.04, the factor given in @meek-par-1984.
+
+Then I plotted the DLI for these locations in 2015, with a blue line showing a moving average of DLI.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+p <- ggplot(data = all, aes(x = date, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(enp.target = 15, se = FALSE) +
+  facet_wrap(~ location, ncol = 2) +
+  scale_x_datetime(breaks = "3 months", minor_breaks = "1 month",
+                   labels = date_format("%b")) +
+  labs(x = "",
+       y = "Daily light integral (DLI)") +
+  background_grid(major = "xy", minor = "xy")
+```
+
+### Step 2, compare calculated DLI to measured DLI
+
+For the four cities in Tennessee, I would need to calculate the DLI. Before doing that, I wanted to check if the calculated DLI was similar to the the measured DLI.
+
+I used the Hargreaves radiation formula to estimate R~s~, from the [estimating missing radiation data section](http://www.fao.org/docrep/x0490e/x0490e07.htm#estimating%20missing%20radiation%20data) of the FAO Crop Evapotranspiration book [@allen1998crop].
+
+$$ R_{s} = k_{R_{s}}\sqrt{T_{max} - T_{min}}R_{a} $$
+
+where
+
+* $R_{a}$ is the extraterrestrial solar radiation
+* $T_{max}$ is the maximum air temperature
+* $T_{min}$ is the minimum air temperature
+* $k_{R_{s}}$ is an adjustment coefficient; I used 0.16 which is the standard for interior (not coastal) locations
+
+Now I had a measured R~s~ and an estimated R~s~ for these locations, and I calculated DLI using the same 2.04 factor, and then had a look at how the estimated R~s~ could predict the measured R~s~.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+p <- ggplot(data = all, aes(x = RsCalc * 2.04, y = Rs * 2.04))
+p + geom_point(alpha = 0.4) +
+  geom_smooth(se = FALSE, method = 'lm') + 
+  geom_abline(intercept = 0, slope = 1, colour = "dark green") +
+  facet_wrap(~ location, ncol = 4) +
+  scale_x_continuous(limits = c(-1, 64)) +
+  scale_y_continuous(limits = c(-1, 64)) +
+  background_grid(major = "xy") +
+  labs(x = "DLI from estimated Rs",
+       y = "DLI from measured Rs")
+```
+
+I combined the data for all eight locations (from Asheville to Watkinsville) to find an equation that would adjust the estimated R~s~ to be closer to the measured R~s~. That equation is $R_{s} = -2.71 + 1.09 R_{s-Hargreaves}$.
+
+After that adjustment, this is the relationship between the measured R~s~ (converted to DLI) at those eight locations and the calculated and adjusted value, which I'll denote as dliCalc.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+p <- ggplot(data = all, aes(x = dliCalc, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(method = 'lm', se = FALSE) +
+  geom_abline(intercept = 0, slope = 1, colour = "dark green") +
+  background_grid(major = "xy") +
+  scale_x_continuous(limits = c(-1, 65)) +
+  scale_y_continuous(limits = c(-1, 65)) +
+  labs(x = "dliCalc",
+       y = "dli")
+```
+
+There is a lot of variability. For any one day, the Hargreaves equation wouldn't make a very accurate prediction of the DLI. But over an entire year, the calculated DLI and the measured DLI are pretty similar.
+
+```{r}
+summary(all$dli)
+summary(all$dliCalc)
+```
+
+An hour of midday sun in midsummer contributes 7.2 moles m^-2^ to the DLI. Looking at the first quartile, median, and third quartile, the differences between what was measured and what was calculated are all less than a half hour of midday sunshine. I would not want to use this method to predict DLI for a location for a single day, but to get an idea of the distribution of DLI over hundreds of days, this method based on the Hargreaves radiation formula seems reasonable. 
+
+The calculations made using the Hargreaves radiation formula underestimate the number of days that actually have a DLI less than 10 or greater than 50, and slightly overestimate the number of days with a DLI in the range of 10 to 50. For more about this, and various ways I looked at this, see [`r/plots.R`](https://github.com/micahwoods/dli_tn/blob/master/r/plots.R).
+
+What I'll try to calculate for the four cities in Tennessee is something like the chart below, showing how the DLI changes through the year. The blue line is a moving average of the measurements at those locations, and the red line is the moving average of the estimate from the Hargreaves radiation formula. With the exception of Asheville and Charlottesville, the Hargreaves method works reasonably well.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+# plot DLI actual through 2015 faceted by location
+# and add in the DLI calc moving average and see how it compares
+p <- ggplot(data = all, aes(x = date, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(enp.target = 15, se = FALSE) +
+  geom_smooth(data = all, aes(x = date, y = dliCalc),
+              enp.target = 15, se = FALSE, colour = "Red") +
+  facet_wrap(~ location, ncol = 2) +
+  background_grid(major = "xy", minor = "xy") +
+  scale_x_datetime(breaks = "3 months", minor_breaks = "1 month",
+                   labels = date_format("%b")) +
+  labs(x = "",
+       y = "DLI, blue actual, red is moving avg of estimate")
+```
+
+### Step 3, calculate DLI for Chattanooga, Knoxville, Memphis, and Nashville
+
+I don't have measured R~s~ data for any of those locations, but I have the method outlined above to get an estimate of DLI by calculation. The process is:
+
+1. get temperature data for the locations, which I'll use in the Hargreaves radiation formula to calculate R~s~ -- I downloaded data from <http://www.ncdc.noaa.gov/cdo-web/> and selected for the airports at the four Tennessee cities.
+2. calculate R~a~ based on latitude and day of year, then calculate R~s~ using the Hargreaves radiation formula as described above, then convert R~s~ to DLI.
+3. These calculations are in the [`tn_four_cities.R`](https://github.com/micahwoods/dli_tn/blob/master/tn_four_cities.R) script.
+
+For 2015, this is the result. Lines are marked at a DLI of 40 (my *no problem* level) and at the 32.6 minimal level required for acceptable Tifeagle as determined by @bunnell-DLI-2005.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+p <- ggplot(data = tn, aes(x = date, y = dliCalc))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(enp.target = 15, se = FALSE) +
+  facet_wrap(~ city, ncol = 2) +
+  background_grid(major = "xy") +
+  geom_abline(intercept = 40, slope = 0, 
+              colour = "dark green", linetype = "dotted") +
+  geom_abline(intercept = 32.6, slope = 0, 
+              colour = "red", linetype = "dotted") +
+  scale_x_datetime(breaks = "3 months", minor_breaks = "1 month",
+                   labels = date_format("%b")) +
+  scale_y_continuous(limits = c(0, 65),
+                     breaks = seq(0, 60, 10)) +
+  labs(x = "",
+       y = bquote("Estimated daily light integral (DLI) in 2015, mol/"*m^2*"/day")) 
+```
+
+That looks reasonable. How does it compare to the one Tennessee location for which I have measured R~s~ data? Remember, the chart of estimated DLI for Chattanooga, Knoxville, Memphis, and Nashville is based on estimated R~s~ from the Hargreaves equation. What if I add another facet to the chart, showing Crossville, and the measured data at that location, and also the calculated data for that location?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+croForPlot <- filter(all, location == "Crossville, TN")
+
+crossville <- cbind.data.frame(croForPlot$date, croForPlot$dli)
+
+colnames(crossville) <- c("date", "dli")
+crossville$city <- "Crossville (measured)"
+
+crossvilleEst <- cbind.data.frame(croForPlot$date, croForPlot$dliCalc)
+colnames(crossvilleEst) <- c("date", "dli")
+crossvilleEst$city <- "Crossville (estimated)"
+
+calc4 <- cbind.data.frame(tn$date, tn$dliCalc, tn$city)
+
+colnames(calc4) <- c("date", "dli", "city")
+
+calc4$city <- ifelse(calc4$city == "Chattanooga", "Chattanooga (estimated)",
+                     ifelse(calc4$city == "Knoxville", "Knoxville (estimated)",
+                            ifelse(calc4$city == "Memphis", "Memphis (estimated)",
+                                   "Nashville (estimated)")))
+
+tnMix <- rbind.data.frame(crossville, calc4, crossvilleEst)
+
+p <- ggplot(data = tnMix, aes(x = date, y = dli))
+p + geom_point(alpha = 0.3) +
+  geom_smooth(enp.target = 15, se = FALSE) +
+  facet_wrap(~ city, ncol = 2) +
+  background_grid(major = "xy") +
+  geom_abline(intercept = 40, slope = 0, 
+              colour = "dark green", linetype = "dotted") +
+  geom_abline(intercept = 32.6, slope = 0, 
+              colour = "red", linetype = "dotted") +
+  scale_x_datetime(breaks = "3 months", minor_breaks = "1 month",
+                   labels = date_format("%b")) +
+  scale_y_continuous(limits = c(0, 65),
+                     breaks = seq(0, 60, 10)) +
+  labs(x = "",
+       y = bquote("DLI in 2015, mol/"*m^2*"/day"))
+
+```
+
+There is a wider spread in the measured data, with more DLI values less than 10 and more than 50. For a moving average of DLI, however, it seems that the estimates are pretty close to what would be observed if the DLI were measured.
+
+<hr>
+
+For more about this and other turfgrass topics, see [Viridescent, the Asian Turfgrass Center blog](http://www.blog.asianturfgrass.com/).
+
+This document was prepared using [R Markdown](http://rmarkdown.rstudio.com/) and was last updated at `r now()`.
+
+### References
+
+<br>
+<br>
