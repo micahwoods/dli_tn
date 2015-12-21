@@ -8,7 +8,7 @@ bibliography: "/home/myuser/Documents/reports/citation.bib"
 
 This describes how I estimated the daily light integral (DLI) for 2015 in Chattanooga, Knoxville, Memphis, and Nashville. The code for this document, and for the calculations, is at <https://github.com/micahwoods/dli_tn>. 
 
-I had written about an average DLI of 40 being a *no problem* level for bermudagrass putting greens. [Brandon Horvath](https://twitter.com/UTTurfPath?lang=en) asked if I could generate some DLI values for Tennessee locations.
+I [had written about](http://www.blog.asianturfgrass.com/2015/12/40-30-20.html) an average DLI of 40 being a *no problem* level for bermudagrass putting greens. [Brandon Horvath](https://twitter.com/UTTurfPath?lang=en) asked if I could generate some DLI values for Tennessee locations.
 
 That sound like it would be easy, but it takes a bit of calculation. It's not like there are sensors for photosynthetically active radiation (PAR) all around the state, streaming the measurements or making them available for download. If there are such data sources, please let me know!
 
@@ -25,7 +25,7 @@ Here's what I did.
 
 ### Step 1, get measured data from nearby stations
 
-I knew that DLI data for the 4 cities of interest were not available, but I could get global solar irradiance (R~s~) measurements for Crossville, TN, and for a number of locations in the surrounding states. [`nrcc_nearby_stations.R`](https://github.com/micahwoods/dli_tn/blob/master/nrcc_nearby_stations.R) gets the 2015 daily summaries from the [U.S. Climate Reference Network](http://www.ncdc.noaa.gov/crn/qcdatasets.html) [@Diamond2013]. Then, I converted the measured R~s~ from units of MJ m^-2^ d^-1^ to DLI in units of moles m^-2^ d^-1^. I did this by multiplying R~s~ by 2.04, the factor given in @meek-par-1984.
+I knew that DLI data for the 4 cities of interest were not available, but I could get global solar radiation (R~s~) measurements for Crossville, TN, and for a number of locations in the surrounding states. [`nrcc_nearby_stations.R`](https://github.com/micahwoods/dli_tn/blob/master/nrcc_nearby_stations.R) gets the 2015 daily summaries from the [U.S. Climate Reference Network](http://www.ncdc.noaa.gov/crn/qcdatasets.html) [@Diamond2013]. Then, I converted the measured R~s~ from units of MJ m^-2^ d^-1^ to DLI in units of moles m^-2^ d^-1^. I did this by multiplying R~s~ by 2.04, the factor given in @meek-par-1984.
 
 Then I plotted the DLI for these locations in 2015, with a blue line showing a moving average of DLI.
 
@@ -198,5 +198,3 @@ This document was prepared using [R Markdown](http://rmarkdown.rstudio.com/) and
 
 ### References
 
-<br>
-<br>
