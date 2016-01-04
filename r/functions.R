@@ -50,3 +50,9 @@ c4gp <- function(x) {
   GP <- ifelse(x >= 31, 1, 2.71828 ^ (-0.5 * ((x - 31) / 7) ^ 2))
   return(GP)
 }
+
+# function to calculate gp C3
+c3gp <- function(x) {
+  GP <- 2.71828 ^ (-0.5 * ((x - 20) / 5.5) ^ 2)
+  return(GP)
+}
