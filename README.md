@@ -9,3 +9,5 @@ First,  `dli_tn/nrcc_nearby_stations.R` downloads R<sub>s</sub> data from select
 The  `dli_tn/tn_four_cities.R` file works with temperature data from Memphis, Nashville, Chattanooga, and Knoxville, using the Hargreaves equation to make an estimate of R<sub>s</sub> for each of those locations.
 
 A further description of these calculations is posted at <http://www.seminar.asianturfgrass.com/tn_dli_description.html>.
+
+In June 2016 I added the `r/20160628_starkville.R` script to calculate the estimated DLI for Starkville, MS.
