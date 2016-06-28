@@ -40,14 +40,14 @@ tn$date1 <- as.Date(tn$date)
 # plot by day of year
 p <- ggplot(data = tn, aes(x = date1, y = dliCalc))
 p + geom_point(alpha = 0.3) +
-  geom_smooth(enp.target = 15, se = FALSE) +
+  geom_smooth(se = FALSE) +
   facet_wrap(~ city, ncol = 2) +
   background_grid(major = "xy") +
   geom_abline(intercept = 40, slope = 0, 
               colour = "dark green", linetype = "dotted") +
   geom_abline(intercept = 32.8, slope = 0, 
               colour = "red", linetype = "dotted") +
-  scale_x_date(breaks = "1 month", labels=date_format("%b"),
+  scale_x_date(date_breaks = "1 month", labels = date_format("%b"),
                expand = c(7/365, 4/365)) +
   scale_y_continuous(limits = c(0, 60),
                      breaks = seq(0, 60, 10)) +
@@ -149,3 +149,27 @@ p + geom_line(aes(colour = city)) +
   scale_y_continuous(limits = c(0, 100),
                      breaks = seq(0, 100, 20)) +
   annotate("text", x = ymd(20150415), y = 90, label = "For more about growth index see\nwww.blog.asianturfgrass.com/2015/09/a-dli-index.html")
+
+
+
+
+# at request of Jim Brosnan, plot cool and warm
+tn$gpC3 <- c3gp(tn$meanTemp)
+
+p <- ggplot(data = tn, aes(x = date, y = gpC3))
+p + geom_point(colour = "Blue", alpha = 0.2) +
+  geom_smooth(se = FALSE, colour = "blue") +
+              
+  geom_point(data = tn, aes(x = date, y = gpC4),
+                            colour = "Red", alpha = 0.2) +
+  geom_smooth(data = tn, aes(x = date, y = gpC4),
+              colour = "Red", se = FALSE) +
+  
+  scale_x_datetime(breaks = date_breaks("2 months"), labels = date_format("%b")) +
+  facet_wrap(~ city) +
+  labs(x = "", 
+       y = "Temperature-based growth potential (GP)") +
+  theme(plot.margin=unit(c(1,1,0.5,0.5),"cm")) +
+  theme_cowplot(font_size = 28) +
+  background_grid(major = "xy") 
+
